@@ -1,0 +1,303 @@
+Turbo Assembler	 Version 4.1	    24/09/12 08:44:00	    Page 1
+lab1.ASM
+
+
+
+      1	0000			     .model small
+      2	0000			     .stack 100h
+      3
+      4	0000			     .data
+      5
+      6	0000  2B			 op_add		     db	'+'
+      7	0001  2A			 op_mul		     db	'*'
+      8	0002  2D			 op_sub		     db	'-'
+      9	0003  2F			 op_div		     db	'/'
+     10	0004  21			 op_inv		     db	'!'
+     11
+     12	0005  0000			 num_1		     dw	0
+     13
+     14	0007  0A 0D 2D 2D 2D 2D	2D+	 msg_current_1	     db	10, 13,	'----------', 10, 13, '= ', '$'
+     15	      2D 2D 2D 2D 2D 0A	0D+
+     16	      3D 20 24
+     17	0018  0A 0D 2D 2D 2D 2D	2D+	 msg_current_2	     db	10, 13,	'----------', 10, 13, '$'
+     18	      2D 2D 2D 2D 2D 0A	0D+
+     19	      24
+     20	0027  5B 2B 5D 20 5B 2D	5D+	 msg_prompt	     db	'[+] [-] [*] [/] [!] [ESC]', 10, 13, '>	', '$'
+     21	      20 5B 2A 5D 20 5B	2F+
+     22	      5D 20 5B 21 5D 20	5B+
+     23	      45 53 43 5D 0A 0D	3E+
+     24	      20 24
+     25	0045  0A 0D 6F 70 65 72	61+	 msg_prompt2	     db	10, 13,	'operand > $'
+     26	      6E 64 20 3E 20 24
+     27
+     28	0052  0000			 _readn_buffer	     dw	0
+     29	0054  08 20 08 24		 _readn_backspace    db	8, 32, 8, '$'
+     30
+     31	0058  0B*(00)			 _print_buffer	     db	 11 dup	(0)
+     32	0063  24					     db	 '$'
+     33	0064  000A			 _print_bufsize	     dw	 10
+     34	0066  2D 24			 _print_minus	     db	 '-$'
+     35
+     36
+     37	0068			     .code
+     38
+     39				     ;-------------------------------------
+     40				     ; Exit to DOS
+     41				     ;-------------------------------------
+     42	0000			     exit proc
+     43	0000  B8 4C00			 mov	 ax, 4c00h
+     44	0003  CD 21			 int	 21h
+     45	0005  C3			 ret
+     46	0006			     exit endp
+     47
+     48				     ;-------------------------------------
+     49				     ; Print string from AX to $
+     50				     ;-------------------------------------
+     51	0006			     print proc
+     52	0006  8B D0			 mov	 dx, ax
+     53	0008  B4 09			 mov	 ah, 9h
+     54	000A  CD 21			 int	 21h
+     55	000C  C3			 ret
+     56	000D			     print endp
+     57
+Turbo Assembler	 Version 4.1	    24/09/12 08:44:00	    Page 2
+lab1.ASM
+
+
+
+     58				     ;-------------------------------------
+     59				     ; Print number from AX
+     60				     ;-------------------------------------
+     61	000D			     printn proc
+     62	000D  A9 8000			 test	 ax, 8000h
+     63	0010  74 0E			 jz	 _printn_plus
+     64	0012  50			 push	 ax
+     65	0013  B8 0066r			 mov	 ax, offset _print_minus
+     66	0016  E8 FFED			 call	 print
+     67	0019  58			 pop	 ax
+     68
+     69	001A  35 FFFF			 xor	 ax, 0FFFFh
+     70	001D  05 0001			 add	 ax, 1
+     71
+     72	0020				 _printn_plus:
+     73
+     74					 ; Prepare
+     75	0020  B9 000A			 mov	 cx, 10
+     76	0023  BE 0058r			 mov	 si, offset _print_buffer
+     77	0026  03 36 0064r		 add	 si, [_print_bufsize]
+     78	002A  4E			 dec	 si
+     79
+     80	002B				 cont:
+     81	002B  BA 0000			     mov     dx, 0
+     82	002E  F7 F1			     div     cx
+     83
+     84					     ; Next digit
+     85	0030  4E			     dec     si
+     86
+     87					     ; Save digit
+     88	0031  80 C2 30			     add     dl, '0'
+     89	0034  88 14			     mov     [si], dl
+     90
+     91	0036  3D 0000			     cmp     ax, 0
+     92	0039  75 F0			     jne     cont
+     93
+     94					 ; Now print
+     95	003B  8B C6			 mov	 ax, si
+     96	003D  E8 FFC6			 call	 print
+     97	0040  C3			 ret
+     98	0041			     printn endp
+     99
+    100				     ;-------------------------------------
+    101				     ; Write character from AL
+    102				     ;-------------------------------------
+    103	0041			     putc proc
+    104	0041  B4 02			 mov	 ah, 2h
+    105	0043  8A D0			 mov	 dl, al
+    106	0045  CD 21			 int	 21h
+    107	0047  C3			 ret
+    108	0048			     putc endp
+    109
+    110
+    111				     ;-------------------------------------
+    112				     ; Read character to AL
+    113				     ;-------------------------------------
+    114	0048			     getch proc
+Turbo Assembler	 Version 4.1	    24/09/12 08:44:00	    Page 3
+lab1.ASM
+
+
+
+    115	0048  B4 08			 mov	 ah, 8h
+    116	004A  CD 21			 int	 21h
+    117	004C  C3			 ret
+    118	004D			     getch endp
+    119
+    120
+    121				     ;-------------------------------------
+    122				     ; Read number to AX
+    123				     ;-------------------------------------
+    124
+    125	004D			     readn proc
+    126	004D  C7 06 0052r 0000		 mov	 [_readn_buffer], 0 ; Data
+    127	0053  B9 0000			 mov	 cx, 0 ; Length
+    128
+    129	0056				 _readn_cont:
+    130	0056  E8 FFEF			     call    getch
+    131	0059  3C 30			     cmp     al, 48
+    132	005B  72 21			     jb	     _readn_notnum
+    133	005D  3C 39			     cmp     al, 57
+    134	005F  77 1D			     ja	     _readn_notnum
+    135
+    136	0061  E8 FFDD				 call	 putc
+    137
+    138	0064  33 DB				 xor	 bx, bx
+    139	0066  B4 00				 mov	 ah, 0
+    140	0068  03 D8				 add	 bx, ax
+    141	006A  83 EB 30				 sub	 bx, 48
+    142	006D  A1 0052r				 mov	 ax, [_readn_buffer]
+    143	0070  BE 000A				 mov	 si, 10
+    144	0073  F7 E6				 mul	 si
+    145	0075  03 C3				 add	 ax, bx
+    146	0077  A3 0052r				 mov	 [_readn_buffer], ax
+    147	007A  41				 inc	 cx
+    148	007B  EB 26 90				 jmp	 _readn_nne
+    149
+    150	007E				     _readn_notnum:
+    151	007E  3C 08			     cmp     al, 8
+    152	0080  75 1A			     jne     _readn_test_enter
+    153
+    154	0082  83 F9 00				 cmp	 cx, 0
+    155	0085  74 1C				 je	 _readn_nne
+    156	0087  49				 dec	 cx
+    157	0088  B8 0054r				 mov	 ax, offset _readn_backspace
+    158	008B  E8 FF78				 call	 print
+    159
+    160	008E  A1 0052r				 mov	 ax, [_readn_buffer]
+    161	0091  BE 000A				 mov	 si, 10
+    162	0094  F7 F6				 div	 si
+    163	0096  A3 0052r				 mov	 [_readn_buffer], ax
+    164
+    165	0099  EB 08 90				 jmp	 _readn_nne
+    166
+    167	009C				     _readn_test_enter:
+    168	009C  3C 0D			     cmp     al, 13
+    169	009E  75 03			     jne     _readn_nne
+    170	00A0  EB 03 90				 jmp	 _readn_done
+    171
+Turbo Assembler	 Version 4.1	    24/09/12 08:44:00	    Page 4
+lab1.ASM
+
+
+
+    172	00A3				     _readn_nne:
+    173	00A3  EB B1			     jmp _readn_cont
+    174
+    175	00A5				 _readn_done:
+    176
+    177	00A5  A1 0052r			 mov	 ax, [_readn_buffer]
+    178	00A8  C3			 ret
+    179	00A9			     readn endp
+    180
+    181
+    182
+    183	00A9			     prep_op proc
+    184	00A9  B8 0045r			 mov	 ax, offset msg_prompt2
+    185	00AC  E8 FF57			 call	 print
+    186	00AF  E8 FF9B			 call	 readn
+    187	00B2  8B D8			 mov	 bx, ax
+    188	00B4  A1 0005r			 mov	 ax, [num_1]
+    189	00B7  C3			 ret
+    190	00B8			     prep_op endp
+    191
+    192	00B8			     main:
+    193					 ; Set data segment
+    194	00B8  B8 0000s			 mov	 ax, @data
+    195	00BB  8E D8			 mov	 ds, ax
+    196
+    197	00BD				 _main_loop:
+    198	00BD  B8 0007r			     mov     ax, offset	msg_current_1
+    199	00C0  E8 FF43			     call    print
+    200	00C3  A1 0005r			     mov     ax, [num_1]
+    201	00C6  E8 FF44			     call    printn
+    202	00C9  B8 0018r			     mov     ax, offset	msg_current_2
+    203	00CC  E8 FF37			     call    print
+    204
+    205	00CF  B8 0027r			     mov     ax, offset	msg_prompt
+    206	00D2  E8 FF31			     call    print
+    207
+    208	00D5  E8 FF70			     call    getch
+    209	00D8  E8 FF66			     call    putc
+    210
+    211	00DB  3A 06 0004r		     cmp     al, op_inv
+    212	00DF  74 1F			     je	     _main_op_inv
+    213
+    214	00E1  3A 06 0000r		     cmp     al, op_add
+    215	00E5  74 26			     je	     _main_op_add
+    216
+    217	00E7  3A 06 0002r		     cmp     al, op_sub
+    218	00EB  74 28			     je	     _main_op_sub
+    219
+    220	00ED  3A 06 0001r		     cmp     al, op_mul
+    221	00F1  74 2A			     je	     _main_op_mul
+    222
+    223	00F3  3A 06 0003r		     cmp     al, op_div
+    224	00F7  74 2C			     je	     _main_op_div
+    225
+    226	00F9  3C 1B			     cmp     al, 27
+    227	00FB  74 52			     je	     _main_exit
+    228
+Turbo Assembler	 Version 4.1	    24/09/12 08:44:00	    Page 5
+lab1.ASM
+
+
+
+    229	00FD  EB 4D 90			     jmp     _main_op_done
+    230
+    231	0100				     _main_op_inv:
+    232	0100  83 36 0005r FF			 xor	 [num_1], 0FFFFh
+    233	0105  83 06 0005r 01			 add	 [num_1], 1
+    234	010A  EB 40 90				 jmp	 _main_op_done
+    235
+    236	010D				     _main_op_add:
+    237	010D  E8 FF99				 call	 prep_op
+    238	0110  03 C3				 add	 ax, bx
+    239	0112  EB 35 90				 jmp	 _main_op_done_2
+    240
+    241	0115				     _main_op_sub:
+    242	0115  E8 FF91				 call	 prep_op
+    243	0118  2B C3				 sub	 ax, bx
+    244	011A  EB 2D 90				 jmp	 _main_op_done_2
+    245
+    246	011D				     _main_op_mul:
+    247	011D  E8 FF89				 call	 prep_op
+    248	0120  F7 E3				 mul	 bx
+    249	0122  EB 25 90				 jmp	 _main_op_done_2
+    250
+    251	0125				     _main_op_div:
+    252	0125  E8 FF81				 call	 prep_op
+    253	0128  F7 06 0005r 8000			 test	 [num_1], 8000h
+    254	012E  74 06				 jz	 _div_cont
+    255	0130  35 FFFF				 xor	 ax, 0FFFFh
+    256	0133  05 0001				 add	 ax, 1
+    257
+    258	0136					 _div_cont:
+    259	0136  F7 F3				 div	 bx
+    260
+    261	0138  F7 06 0005r 8000			 test	 [num_1], 8000h
+    262	013E  74 09				 jz	 _main_op_done_2
+    263	0140  35 FFFF				 xor	 ax, 0FFFFh
+    264	0143  05 0001				 add	 ax, 1
+    265
+    266	0146  EB 01 90				 jmp	 _main_op_done_2
+    267
+    268	0149				     _main_op_done_2:
+    269	0149  A3 0005r			     mov     [num_1], ax
+    270
+    271	014C				     _main_op_done:
+    272
+    273	014C  E9 FF6E			     jmp     _main_loop
+    274
+    275	014F				 _main_exit:
+    276	014F  E8 FEAE			 call	 exit
+    277				     END main
+
