@@ -6,8 +6,8 @@
 	msg_inputXi_b       db 'input x['
 	msg_inputXi_e       db ']:',10,13
 	
-	var_n               dw 0
-	array_x             dw 10 dup (0)
+	n_int               dw 0
+	x_arr_float         dw 10 dup (0)
 	
     op_add              db '+'
     op_mul              db '*'
@@ -190,84 +190,91 @@ main:
     ; Set data segment
     mov     ax, @data
     mov     ds, ax
+	
+	; read_n
+		mov ax, offset msg_inputN
+		call print
+		call readIntNumb
+		mov  n_int,ax
+	;-------------
 
-    _main_loop:
-        mov     ax, offset msg_current_1
-        call    print
-        mov     ax, [num_1]
-        call    printn
-        mov     ax, offset msg_current_2
-        call    print
+    ; _main_loop:
+        ; mov     ax, offset msg_current_1
+        ; call    print
+        ; mov     ax, [num_1]
+        ; call    printn
+        ; mov     ax, offset msg_current_2
+        ; call    print
 
-        mov     ax, offset msg_prompt
-        call    print
+        ; mov     ax, offset msg_prompt
+        ; call    print
 
-        call    getch
-        call    putc    
+        ; call    getch
+        ; call    putc    
 
-        cmp     al, op_inv
-        je      _main_op_inv
+        ; cmp     al, op_inv
+        ; je      _main_op_inv
 
-        cmp     al, op_add
-        je      _main_op_add
+        ; cmp     al, op_add
+        ; je      _main_op_add
 
-        cmp     al, op_sub
-        je      _main_op_sub
+        ; cmp     al, op_sub
+        ; je      _main_op_sub
 
-        cmp     al, op_mul
-        je      _main_op_mul
+        ; cmp     al, op_mul
+        ; je      _main_op_mul
 
-        cmp     al, op_div
-        je      _main_op_div
+        ; cmp     al, op_div
+        ; je      _main_op_div
 
-        cmp     al, 27
-        je      _main_exit
+        ; cmp     al, 27
+        ; je      _main_exit
 
-        jmp     _main_op_done
+        ; jmp     _main_op_done
 
-        _main_op_inv:
-            xor     [num_1], 0FFFFh
-            add     [num_1], 1
-            jmp     _main_op_done
+        ; _main_op_inv:
+            ; xor     [num_1], 0FFFFh
+            ; add     [num_1], 1
+            ; jmp     _main_op_done
 
-        _main_op_add:
-            call    prep_op
-            add     ax, bx
-            jmp     _main_op_done_2
+        ; _main_op_add:
+            ; call    prep_op
+            ; add     ax, bx
+            ; jmp     _main_op_done_2
 
-        _main_op_sub:
-            call    prep_op
-            sub     ax, bx
-            jmp     _main_op_done_2
+        ; _main_op_sub:
+            ; call    prep_op
+            ; sub     ax, bx
+            ; jmp     _main_op_done_2
 
-        _main_op_mul:
-            call    prep_op
-            mul     bx
-            jmp     _main_op_done_2
+        ; _main_op_mul:
+            ; call    prep_op
+            ; mul     bx
+            ; jmp     _main_op_done_2
 
-        _main_op_div:
-            call    prep_op
-            test    [num_1], 8000h
-            jz      _div_cont
-            xor     ax, 0FFFFh
-            add     ax, 1
+        ; _main_op_div:
+            ; call    prep_op
+            ; test    [num_1], 8000h
+            ; jz      _div_cont
+            ; xor     ax, 0FFFFh
+            ; add     ax, 1
             
-            _div_cont:
-            div     bx
+            ; _div_cont:
+            ; div     bx
 
-            test    [num_1], 8000h
-            jz      _main_op_done_2
-            xor     ax, 0FFFFh
-            add     ax, 1
+            ; test    [num_1], 8000h
+            ; jz      _main_op_done_2
+            ; xor     ax, 0FFFFh
+            ; add     ax, 1
 
-            jmp     _main_op_done_2
+            ; jmp     _main_op_done_2
             
-        _main_op_done_2:
-        mov     [num_1], ax
+        ; _main_op_done_2:
+        ; mov     [num_1], ax
 
-        _main_op_done:
+        ; _main_op_done:
 
-        jmp     _main_loop
+        ; jmp     _main_loop
 
     _main_exit:
     call    exit
