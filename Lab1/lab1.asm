@@ -2,12 +2,24 @@
 .stack 100h
 
 .data
+    ;============messages============================
 	msg_inputN          db 'input n:',10,13
 	msg_inputXi_b       db 'input x['
 	msg_inputXi_e       db ']:',10,13
+	;================================================
 	
-	n_int               dw 0
-	x_arr_float         dw 10 dup (0)
+	;============input data==========================
+	n                   dd 5.0
+	m    				dd 10.0
+	x_arr               dd 100 2.1,1.9,7.3,6.55,8.4
+	;================================================
+	;===========temp variables=======================
+	sum_x               dd 0
+	sum_x_div_n         dd 0
+	braket_answ         dd 0
+	n_div_n_minus_one   dd 0
+	answer              dd 0
+	;=================================================
 	
     op_add              db '+'
     op_mul              db '*'
@@ -185,19 +197,71 @@ prep_op proc
     mov     ax, [num_1]
     ret
 prep_op endp
-    
+
+find_sum_x proc
+	pusha
+	mov si,0
+	mov si, [x_array]
+	mov cx,0
+	mov cx, n
+	while_array_not_empty:	
+		fadd x_array[si]            ;add next x[i] to head of stack
+		add si, 4                   ;go to next x[i]
+		loop while_array_not_empty
+	end_proc:
+		fstp sum_x                 ;take sum from stack
+	popa
+find_sum_x endp
+
+find_sum_x_div_n proc
+    pusha
+		fld sum_x
+		fld n
+		fdiv
+		fstp sum_x_div_n
+	popa
+find_sum_x_div_n endp
+
+find_braket_answ proc
+    pusha
+		fld sum_x_div_n
+		fld m
+		fsub
+		fstp braket_answ
+	popa
+find_braket_answ endp
+
+find_n_div_n_minus_one proc
+	pusha
+	    fld n
+		mov ax, n
+		sum ax, 1
+		fld ax
+		fdiv
+		fstp n_div_n_minus_one
+	popa
+find_n_div_n_minus_one endp
+
+find_answer proc
+    pusha
+	    fld braket_answ
+		fld n_div_n_minus_one
+		fmul
+		fstp answer
+    popa
+find_answer endp
 main:
     ; Set data segment
     mov     ax, @data
     mov     ds, ax
 	
 	; read_n
-		mov ax, offset msg_inputN
-		call print
-		call readIntNumb
-		mov  n_int,ax
+		; mov ax, offset msg_inputN
+		; call print
+		; call readIntNumb
+		; mov  n_int,ax
 	;-------------
-
+		call find_sum_x
     ; _main_loop:
         ; mov     ax, offset msg_current_1
         ; call    print
